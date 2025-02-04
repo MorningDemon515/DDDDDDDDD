@@ -220,6 +220,11 @@ void RenderGraphics(float timeDelta)
     device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
     device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
+    device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+    device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    device->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+    device->SetRenderState(D3DRS_TEXTUREFACTOR, D3DXCOLOR(1.0f,0.0f,1.0f,1.0f));
+
     RenderSprite(texture, 100.0f, 100.0f, textureWidth, textureHeight);
 
     device->EndScene();
