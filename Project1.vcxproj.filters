@@ -21,6 +21,9 @@
     <ClCompile Include="graphics.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="sprite.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="SDL2\lib\SDL2.lib" />

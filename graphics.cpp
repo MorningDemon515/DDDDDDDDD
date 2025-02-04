@@ -21,14 +21,39 @@ extern bool run;
 FT_Library ft;
 FT_Face face;
 
-LPDIRECT3DSURFACE9 backBuffer;//后缓存
-ID3DXSprite* sprite;//精灵
 LPDIRECT3DTEXTURE9 texture;//纹理
 
 int textureWidth, textureHeight;//纹理的宽和高
 D3DLOCKED_RECT lockedRect;
 
 const wchar_t* text = L"将矢量字体解析为位图, 然后将位图写入纹理, 最后将纹理显示出来";
+
+float x = 20.0f;
+float y = 20.0f;
+
+void CreateSpriteVertexBuffer();
+void RenderSprite(LPDIRECT3DTEXTURE9 texture, float x, float y, float width, float height);
+void DeleteSpriteVertexBuffer();
+
+struct Vertex
+{
+    Vertex() {}
+    Vertex(
+        float x, float y, float z,
+        float nx, float ny, float nz,
+        float u, float v)
+    {
+        _x = x;  _y = y;  _z = z;
+        _nx = nx; _ny = ny; _nz = nz;
+        _u = u;  _v = v;
+    }
+    float _x, _y, _z;
+    float _nx, _ny, _nz;
+    float _u, _v; // texture coordinates
+
+    static const DWORD FVF;
+};
+const DWORD Vertex::FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1;
 
 void InitGraphics(int width, int height, HWND hwnd)
 {
@@ -63,7 +88,7 @@ void InitGraphics(int width, int height, HWND hwnd)
 
 	device->SetRenderState(D3DRS_LIGHTING,false);
 
-    D3DXCreateSprite(device, &sprite);
+    CreateSpriteVertexBuffer();
 
     FT_Init_FreeType(&ft); // 初始化FreeType库
     FT_New_Face(ft, "D:/1ABC/test/simfang.ttf", 0, &face); //加载字体
@@ -145,6 +170,12 @@ void InitGraphics(int width, int height, HWND hwnd)
 
     texture->UnlockRect(0); // 解锁纹理
 
+    device->SetTexture(0,texture);
+
+    device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+    device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+    device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+
 	D3DXVECTOR3 position(0.0f, 0.0f, -3.0f);
 	D3DXVECTOR3 target(0.0f, 0.0f, 0.0f);
 	D3DXVECTOR3 up(0.0f, 1.0f, 0.0f);
@@ -186,18 +217,10 @@ void RenderGraphics(float timeDelta)
 
     device->SetTransform(D3DTS_WORLD, &result);
 
-    sprite->Begin(D3DXSPRITE_ALPHABLEND);
+    device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+    device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
-    int x, y, z;
-    float mx, my, mz;
-
-    x = 10, y = 600 / 2, z = 0;
-    mx = float(x), my = float(y), mz = float(z);
-
-    D3DXVECTOR3 position(mx, my, mz);//位置
-    sprite->Draw(texture, nullptr, nullptr, &position, D3DCOLOR_XRGB(255, 255, 255));//渲染
-                                                         //这里的RGB可以修改文本的颜色
-    sprite->End();
+    RenderSprite(texture, 100.0f, 100.0f, textureWidth, textureHeight);
 
     device->EndScene();
     device->Present(0, 0, 0, 0);
@@ -205,7 +228,7 @@ void RenderGraphics(float timeDelta)
 
 void CleanGraphics()
 {
-    if (sprite) sprite->Release();
+    DeleteSpriteVertexBuffer();
     if (texture) texture->Release();
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
